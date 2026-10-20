@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Mic Standupindo Jogja</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col justify-between selection:bg-zinc-100 selection:text-zinc-900">
+
+  <!-- Header -->
+  <header class="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-white">Open Mic Standupindo Jogja</h1>
+        <p class="text-xs text-zinc-400 mt-0.5" id="mode-badge">Mode Publik</p>
+      </div>
+      <button id="btn-toggle-admin" onclick="handleAdminToggle()" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition text-zinc-200 flex items-center gap-2">
+        <span id="btn-admin-icon">🔒</span>
+        <span id="btn-admin-text">Login Admin</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-3xl mx-auto px-4 py-8 w-full flex-grow">
+
+    <!-- Admin Control Panel -->
+    <section id="admin-panel" class="hidden mb-8 p-6 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <h2 class="font-semibold text-sm tracking-wide text-zinc-300 uppercase">Pengaturan Admin</h2>
+        <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20 font-medium">Akses Admin Aktif</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Tanggal Open Mic</label>
+          <input type="date" id="input-date" onchange="updateSettings()" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-500 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Kuota Komika Naik (Minggu Ini)</label>
+          <input type="number" id="input-quota" min="1" onchange="updateSettings()" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-500 transition">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-1.5">MC Sesi 1</label>
+          <input type="text" id="input-mc1" placeholder="Nama MC Sesi 1" oninput="updateSettings()" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-500 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-1.5">MC Sesi 2</label>
+          <input type="text" id="input-mc2" placeholder="Nama MC Sesi 2" oninput="updateSettings()" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-500 transition">
+        </div>
+      </div>
+
+      <!-- Form Tambah Komika -->
+      <div class="pt-2 border-t border-zinc-800">
+        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Tambah Komika Baru</label>
+        <form onsubmit="addPerformer(event)" class="flex gap-2">
+          <input type="text" id="input-new-performer" placeholder="Masukkan nama komika..." required class="flex-grow bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-500 transition">
+          <button type="submit" class="px-4 py-2 bg-white text-zinc-950 font-medium text-sm rounded-lg hover:bg-zinc-200 transition">Tambah</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Public View Info Header -->
+    <div class="text-center space-y-3 mb-8">
+      <div class="inline-block px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-mono text-zinc-400" id="display-date-badge">
+        Jumat, -
+      </div>
+      <h2 class="text-2xl font-bold tracking-tight text-white" id="display-title">Daftar Komika Tampil</h2>
+      
+      <!-- MC Cards -->
+      <div class="grid grid-cols-2 gap-3 max-w-md mx-auto pt-2">
+        <div class="bg-zinc-900/60 border border-zinc-800/80 p-3 rounded-xl text-center">
+          <span class="block text-[10px] uppercase font-semibold tracking-wider text-zinc-500 mb-0.5">MC Sesi 1</span>
+          <span class="text-sm font-medium text-zinc-200" id="display-mc1">-</span>
+        </div>
+        <div class="bg-zinc-900/60 border border-zinc-800/80 p-3 rounded-xl text-center">
+          <span class="block text-[10px] uppercase font-semibold tracking-wider text-zinc-500 mb-0.5">MC Sesi 2</span>
+          <span class="text-sm font-medium text-zinc-200" id="display-mc2">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lineup Section (Minggu Ini) -->
+    <section class="mb-10">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-semibold tracking-wide text-zinc-300 uppercase flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+          Lineup Tampil Minggu Ini
+        </h3>
+        <span class="text-xs text-zinc-400 font-mono" id="quota-count">0 / 30</span>
+      </div>
+
+      <div id="lineup-list" class="space-y-2">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- Waiting List Section -->
+    <section id="waitinglist-section" class="pt-6 border-t border-zinc-800/80">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-semibold tracking-wide text-zinc-400 uppercase flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-500/80 inline-block"></span>
+          Daftar Waiting List (Minggu Depan)
+        </h3>
+        <span class="text-xs text-zinc-400 font-mono" id="waiting-count">0 Komika</span>
+      </div>
+
+      <div id="waiting-list" class="space-y-2">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-zinc-800/80 py-6 text-center text-xs text-zinc-400">
+    &copy; 2026 Standupindo Jogja
+  </footer>
+
+  <!-- Script Logic -->
+  <script>
+    const STORAGE_KEY = 'openmic_standupindo_jogja_data';
+    const DEFAULT_PIN = '1234';
+
+    let appData = {
+      eventDate: getNextFriday(),
+      quota: 30,
+      mc1: 'TBA',
+      mc2: 'TBA',
+      performers: []
+    };
+
+    let isAdmin = false;
+
+    // Helper: get next Friday's YYYY-MM-DD
+    function getNextFriday() {
+      const today = new Date();
+      const day = today.getDay();
+      const diff = (5 - day + 7) % 7;
+      const nextFriday = new Date(today);
+      nextFriday.setDate(today.getDate() + (diff === 0 ? 0 : diff));
+      return nextFriday.toISOString().split('T')[0];
+    }
+
+    // Format date string to Indonesian format
+    function formatDateIndo(dateStr) {
+      if (!dateStr) return 'Tanggal belum diatur';
+      const d = new Date(dateStr + 'T00:00:00');
+      const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      return d.toLocaleDateString('id-ID', options);
+    }
+
+    // Load data from LocalStorage
+    function loadData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          appData = { ...appData, ...JSON.parse(saved) };
+        } catch (e) {
+          console.error('Failed to parse saved data', e);
+        }
+      }
+    }
+
+    // Save data to LocalStorage
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    }
+
+    // Toggle Admin Mode
+    function handleAdminToggle() {
+      if (isAdmin) {
+        isAdmin = false;
+        render();
+      } else {
+        const pin = prompt('Masukkan PIN Admin:');
+        if (pin === DEFAULT_PIN) {
+          isAdmin = true;
+          render();
+        } else if (pin !== null) {
+          alert('PIN salah!');
+        }
+      }
+    }
+
+    // Update settings from input form
+    function updateSettings() {
+      appData.eventDate = document.getElementById('input-date').value;
+      appData.quota = parseInt(document.getElementById('input-quota').value) || 30;
+      appData.mc1 = document.getElementById('input-mc1').value.trim() || 'TBA';
+      appData.mc2 = document.getElementById('input-mc2').value.trim() || 'TBA';
+      saveData();
+      render();
+    }
+
+    // Add Performer
+    function addPerformer(e) {
+      e.preventDefault();
+      const input = document.getElementById('input-new-performer');
+      const name = input.value.trim();
+      if (name) {
+        appData.performers.push(name);
+        input.value = '';
+        saveData();
+        render();
+      }
+    }
+
+    // Delete Performer
+    function deletePerformer(index) {
+      if (confirm(`Hapus "${appData.performers[index]}" dari daftar?`)) {
+        appData.performers.splice(index, 1);
+        saveData();
+        render();
+      }
+    }
+
+    // Move Performer
+    function movePerformer(index, direction) {
+      const newIndex = index + direction;
+      if (newIndex >= 0 && newIndex < appData.performers.length) {
+        const temp = appData.performers[index];
+        appData.performers[index] = appData.performers[newIndex];
+        appData.performers[newIndex] = temp;
+        saveData();
+        render();
+      }
+    }
+
+    // Edit Performer
+    function editPerformer(index) {
+      const newName = prompt('Ubah nama komika:', appData.performers[index]);
+      if (newName !== null && newName.trim() !== '') {
+        appData.performers[index] = newName.trim();
+        saveData();
+        render();
+      }
+    }
+
+    // Render UI
+    function render() {
+      // Admin Panel state
+      const adminPanel = document.getElementById('admin-panel');
+      const modeBadge = document.getElementById('mode-badge');
+      const btnAdminText = document.getElementById('btn-admin-text');
+      const btnAdminIcon = document.getElementById('btn-admin-icon');
+
+      if (isAdmin) {
+        adminPanel.classList.remove('hidden');
+        modeBadge.textContent = 'Mode Admin';
+        modeBadge.className = 'text-xs text-emerald-400 font-medium mt-0.5';
+        btnAdminText.textContent = 'Keluar Admin';
+        btnAdminIcon.textContent = '🔓';
+
+        // Populate inputs if active
+        document.getElementById('input-date').value = appData.eventDate;
+        document.getElementById('input-quota').value = appData.quota;
+        document.getElementById('input-mc1').value = appData.mc1 === 'TBA' ? '' : appData.mc1;
+        document.getElementById('input-mc2').value = appData.mc2 === 'TBA' ? '' : appData.mc2;
+      } else {
+        adminPanel.classList.add('hidden');
+        modeBadge.textContent = 'Mode Publik';
+        modeBadge.className = 'text-xs text-zinc-400 mt-0.5';
+        btnAdminText.textContent = 'Login Admin';
+        btnAdminIcon.textContent = '🔒';
+      }
+
+      // Public displays
+      document.getElementById('display-date-badge').textContent = formatDateIndo(appData.eventDate);
+      document.getElementById('display-title').textContent = `Daftar komika yang naik di hari jumat tanggal ${appData.eventDate ? new Date(appData.eventDate+'T00:00:00').toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : ''}`;
+      document.getElementById('display-mc1').textContent = appData.mc1 || '-';
+      document.getElementById('display-mc2').textContent = appData.mc2 || '-';
+
+      // Splitting performers by Quota
+      const lineup = appData.performers.slice(0, appData.quota);
+      const waiting = appData.performers.slice(appData.quota);
+
+      document.getElementById('quota-count').textContent = `${lineup.length} / ${appData.quota}`;
+      document.getElementById('waiting-count').textContent = `${waiting.length} Komika`;
+
+      // Render Lineup
+      const lineupContainer = document.getElementById('lineup-list');
+      if (lineup.length === 0) {
+        lineupContainer.innerHTML = `<div class="text-center py-8 text-zinc-500 text-sm border border-dashed border-zinc-800 rounded-xl">Belum ada komika terdaftar</div>`;
+      } else {
+        lineupContainer.innerHTML = lineup.map((name, idx) => `
+          <div class="flex items-center justify-between p-3.5 bg-zinc-900/80 border border-zinc-800/80 rounded-xl hover:border-zinc-700 transition group">
+            <div class="flex items-center gap-3.5 overflow-hidden">
+              <span class="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 text-xs font-mono font-semibold text-zinc-300">
+                ${idx + 1}
+              </span>
+              <span class="text-sm font-medium text-zinc-100 truncate">${escapeHtml(name)}</span>
+            </div>
+            ${isAdmin ? `
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="movePerformer(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 p-1 text-zinc-500 cursor-not-allowed"' : 'class="p-1 text-zinc-400 hover:text-white transition"'}>▲</button>
+                <button onclick="movePerformer(${idx}, 1)" ${idx === appData.performers.length - 1 ? 'disabled class="opacity-30 p-1 text-zinc-500 cursor-not-allowed"' : 'class="p-1 text-zinc-400 hover:text-white transition"'}>▼</button>
+                <button onclick="editPerformer(${idx})" class="p-1 text-zinc-400 hover:text-amber-400 transition ml-1" title="Edit Name">✏️</button>
+                <button onclick="deletePerformer(${idx})" class="p-1 text-zinc-400 hover:text-rose-400 transition" title="Delete">🗑️</button>
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+      }
+
+      // Render Waiting List
+      const waitingContainer = document.getElementById('waiting-list');
+      if (waiting.length === 0) {
+        waitingContainer.innerHTML = `<div class="text-center py-6 text-zinc-600 text-xs italic">Tidak ada komika di waiting list</div>`;
+      } else {
+        waitingContainer.innerHTML = waiting.map((name, idx) => {
+          const actualIdx = appData.quota + idx;
+          return `
+            <div class="flex items-center justify-between p-3 bg-zinc-950/60 border border-zinc-800/60 rounded-xl hover:border-zinc-700 transition">
+              <div class="flex items-center gap-3 overflow-hidden">
+                <span class="w-7 h-7 flex items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 text-xs font-mono font-semibold">
+                  W${idx + 1}
+                </span>
+                <span class="text-sm font-medium text-zinc-300 truncate">${escapeHtml(name)}</span>
+              </div>
+              ${isAdmin ? `
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button onclick="movePerformer(${actualIdx}, -1)" class="p-1 text-zinc-400 hover:text-white transition">▲</button>
+                  <button onclick="movePerformer(${actualIdx}, 1)" ${actualIdx === appData.performers.length - 1 ? 'disabled class="opacity-30 p-1 text-zinc-500 cursor-not-allowed"' : 'class="p-1 text-zinc-400 hover:text-white transition"'}>▼</button>
+                  <button onclick="editPerformer(${actualIdx})" class="p-1 text-zinc-400 hover:text-amber-400 transition ml-1">✏️</button>
+                  <button onclick="deletePerformer(${actualIdx})" class="p-1 text-zinc-400 hover:text-rose-400 transition">🗑️</button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Initialize on page load
+    loadData();
+    render();
+  </script>
+</body>
+</html>
