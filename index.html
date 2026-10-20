@@ -160,21 +160,47 @@
       return d.toLocaleDateString('id-ID', options);
     }
 
-    // Load data from LocalStorage
-    function loadData() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          appData = { ...appData, ...JSON.parse(saved) };
-        } catch (e) {
-          console.error('Failed to parse saved data', e);
+// Ganti dengan kredensial dari JSONBin milik Anda
+    const BIN_ID = 'MASUKKAN_BIN_ID_ANDA_DISINI'; 
+    const API_KEY = 'MASUKKAN_API_KEY_ANDA_DISINI';
+    const URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+    // Load data dari Cloud
+    async function loadData() {
+      try {
+        // Beri indikator visual loading jika perlu
+        document.getElementById('display-title').textContent = "Memuat data...";
+        
+        const res = await fetch(URL, {
+          headers: { 'X-Master-Key': API_KEY }
+        });
+        const data = await res.json();
+        
+        if (data.record) {
+          appData = data.record;
+          render();
         }
+      } catch (e) {
+        console.error('Gagal memuat data dari cloud', e);
+        document.getElementById('display-title').textContent = "Gagal memuat data";
       }
     }
 
-    // Save data to LocalStorage
-    function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    // Save data ke Cloud setiap ada perubahan
+    async function saveData() {
+      try {
+        await fetch(URL, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': API_KEY
+          },
+          body: JSON.stringify(appData)
+        });
+      } catch (e) {
+        console.error('Gagal menyimpan data', e);
+        alert('Koneksi terputus, data gagal disimpan.');
+      }
     }
 
     // Toggle Admin Mode
